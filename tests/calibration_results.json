@@ -1,0 +1,38 @@
+{
+    "shoulder_pan": {
+        "id": 1,
+        "min_angle": 15.8,
+        "center_angle": 129.0,
+        "max_angle": 242.2
+    },
+    "shoulder_lift": {
+        "id": 2,
+        "min_angle": 26.2,
+        "center_angle": 129.8,
+        "max_angle": 233.5
+    },
+    "elbow_flex": {
+        "id": 3,
+        "min_angle": 14.9,
+        "center_angle": 111.7,
+        "max_angle": 208.6
+    },
+    "wrist_flex": {
+        "id": 4,
+        "min_angle": 51.6,
+        "center_angle": 139.3,
+        "max_angle": 227.0
+    },
+    "wrist_roll": {
+        "id": 5,
+        "min_angle": -51.8,
+        "center_angle": 116.4,
+        "max_angle": 284.6
+    },
+    "gripper": {
+        "id": 6,
+        "min_angle": 52.3,
+        "center_angle": 115.2,
+        "max_angle": 178.3
+    }
+}
