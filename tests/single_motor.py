@@ -1,10 +1,15 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, Path(__file__).resolve().parents[1] / "lib" / "lewansoul-servo-bus" / "src" / "python")
 from lewansoul_servo_bus import ServoBus
+import time
 
-servo_bus = ServoBus('/dev/ttyUSB0')
+servo_bus = ServoBus('/dev/cu.usbmodem5C4C1247351')
 
 # Move servo with ID 1 to 90 degrees in 1.0 seconds
-servo_bus.move_time_write(1, 90, 1.0)
+servo_bus.move_time_write(1, 120, 1.0)
+time.sleep(1.5)  # Wait for the movement to complete
 
-# Move servo with ID 2 to 180 degrees in 2.0 seconds
-servo_2 = servo_bus.get_servo(2)
-servo_2.move_time_write(180, 2.0)
+
+
+
