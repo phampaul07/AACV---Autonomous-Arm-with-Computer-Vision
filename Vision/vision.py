@@ -88,7 +88,7 @@ if None not in source_points:
     src_pts = np.array(source_points, dtype=np.float32)
     dst_pts = np.array([
         [640, 0],
-        [0, 0],
+        [320, 400],
         [0, 400],
         [640, 400]
     ], dtype=np.float32)
@@ -111,6 +111,13 @@ if M.get('m00', 0) != 0:
     cY = int(M['m01'] / M['m00'])
 else:
     cX, cY = 0, 0
+
+# Signed coordinates relative to bottom-center origin
+origin_x = analysis_img.shape[1] // 2
+origin_y = analysis_img.shape[0]
+relative_x = cX - origin_x
+relative_y = origin_y - cY
+
 COM = cv2.circle(analysis_img.copy(), (cX, cY), 5, (0, 0, 255), 2)
 Middle = cv2.circle(cropped.copy(), (cropped.shape[1] // 2, cropped.shape[0] // 2), 5, (255, 0, 0), 2)
 Bottom_left = cv2.circle(cropped.copy(), (40, cropped.shape[0]-40), 5, (0, 255, 0), 2)
@@ -122,6 +129,7 @@ bottom_row = cv2.hconcat([Bottom_left, Bottom_right])
 Corners_combined = cv2.vconcat([top_row, bottom_row])
 
 print(f"Center: ({cX}, {cY})")
+print(f"Signed COM relative to bottom-center: (x={relative_x}, y={relative_y})")
 cv2.imwrite('cropped_image.jpg', cropped)
 cv2.imwrite('hsv.jpg', hsv)
 cv2.imwrite('Testimg.jpg', frame)
