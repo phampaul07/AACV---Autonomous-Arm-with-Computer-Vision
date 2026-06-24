@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./lib/lewansoul-servo-bus-master/src/python"
+        "./lib/lewansoul-servo-bus-master/src/python",
+        "./core"
     ]
 }

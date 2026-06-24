@@ -24,6 +24,15 @@ servo_names = {
     6: "gripper"
 }
 
+RESTING_STATES = {
+    1: "center",  
+    2: "max",     
+    3: "min",     
+    4: "min",     
+    5: "center",  
+    6: "max"      
+}
+
 try:
     with open('calibration_results.json', 'r') as f:
         cal_data = json.load(f)
@@ -31,14 +40,16 @@ except FileNotFoundError:
     print("Error: Could not find 'calibration_results.json'.")
     sys.exit(1)
 
+cal_data["wrist_roll"]["center_angle"] = 23.76
+
 L1 = 116 # Length of the upper arm in mm
 L2 = 135 # Length of the forearm in mm
 L3 = 167 # Length of the end effector in mm
-Z_offset = 118 # Offset in the Z direction in mm
+Z_offset = 55 # Offset in the Z direction in mm
 Z_target = 22.5 # Target Z position in mm
 
-x = 100  # X position in mm
-y = 300  # Y position in mm
+x = -150  # X position in mm
+y = 350  # Y position in mm 
 
 IK_result = inverse_kinematics(x, y, L1, L2, L3, Z_offset, Z_target)
 
@@ -48,23 +59,43 @@ if IK_result is None:
 
 base_angle, shoulder_angle, elbow_angle, wrist_angle = IK_result
 
-base_cmd = map_angle_to_servo(1, base_angle, cal_data, math_center_offset=90, inverted=True)
+base_cmd = map_angle_to_servo(1, base_angle, cal_data, math_center_offset=90, inverted=False)
 shoulder_cmd = map_angle_to_servo(2, shoulder_angle, cal_data, math_center_offset=0, inverted=True)
-elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data, math_center_offset=180, inverted=True)
-wrist_cmd = map_angle_to_servo(4, wrist_angle, cal_data, math_center_offset=0, inverted=True)
+elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data, math_center_offset=180, inverted=False)
+wrist_cmd = map_angle_to_servo(4, wrist_angle, cal_data, math_center_offset=0, inverted=False)
 
 with ServoBus(MAC_PORT, baudrate=1000000, discard_echo=False) as servo_bus:
 
+    # Move to target position
     servo_bus.move_time_write(1, base_cmd, 2.0)
-    time.sleep(2.5)
     servo_bus.move_time_write(2, shoulder_cmd, 2.0)
-    time.sleep(2.5)
     servo_bus.move_time_write(3, elbow_cmd, 2.0)
-    time.sleep(2.5)
     servo_bus.move_time_write(4, wrist_cmd, 2.0)
-    time.sleep(2.5)
+    open_gripper_angle = cal_data["gripper"]["min_angle"]
+    servo_bus.move_time_write(6, open_gripper_angle, 1.5)
 
-    servo_bus.move_time_write(1, base_cmd, 2.0)
+    time.sleep(2)
+
+    close_gripper_angle = cal_data["gripper"]["max_angle"]
+    servo_bus.move_time_write(6, close_gripper_angle, 1.5)
+    time.sleep(2)
+
+    print("Fold to resting position...")
+    for servo_id in [1, 2, 3, 4, 5, 6]:
+            name = servo_names[servo_id]
+            state = RESTING_STATES[servo_id]
+            
+            rest_angle = cal_data[name][f"{state}_angle"]
+            
+            servo_bus.move_time_write(servo_id, rest_angle, 2.0)
+
+        # Give the motors time to fold back up before the script ends and cuts communication
+    time.sleep(2.5)
+    print("Sequence complete.")
+    
+
+
+
 
 
 
