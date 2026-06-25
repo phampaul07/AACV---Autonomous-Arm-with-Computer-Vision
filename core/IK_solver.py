@@ -20,7 +20,7 @@ def inverse_kinematics(x, y, L1, L2, L3, Z_offset, Z_target):
     if D > max_reach:
         print("Target position is out of reach. Please choose a different position.")
         return None
-    min_reach = 115.0
+    min_reach = 0
     if D < abs(min_reach):
         print("Target position is too close to the base. Please choose a different position.")
         return None

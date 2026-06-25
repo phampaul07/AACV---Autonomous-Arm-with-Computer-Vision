@@ -41,15 +41,16 @@ except FileNotFoundError:
     sys.exit(1)
 
 cal_data["wrist_roll"]["center_angle"] = 23.76
+cal_data["wrist_flex"]["center_angle"] = 90
 
-L1 = 116 # Length of the upper arm in mm
+L1 = 114 # Length of the upper arm in mm
 L2 = 135 # Length of the forearm in mm
-L3 = 167 # Length of the end effector in mm
-Z_offset = 55 # Offset in the Z direction in mm
-Z_target = 22.5 # Target Z position in mm
+L3 = 155.64 # Length of the end effector in mm
+Z_offset = 119 # Offset in the Z direction in mm
+Z_target = 30 # Target Z position in mm
 
-x = -150  # X position in mm
-y = 350  # Y position in mm 
+x = 0  # X position in mm
+y = 250  # Y position in mm 
 
 IK_result = inverse_kinematics(x, y, L1, L2, L3, Z_offset, Z_target)
 
@@ -60,21 +61,21 @@ if IK_result is None:
 base_angle, shoulder_angle, elbow_angle, wrist_angle = IK_result
 
 base_cmd = map_angle_to_servo(1, base_angle, cal_data, math_center_offset=90, inverted=False)
-shoulder_cmd = map_angle_to_servo(2, shoulder_angle, cal_data, math_center_offset=0, inverted=True)
-elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data, math_center_offset=180, inverted=False)
+shoulder_cmd = map_angle_to_servo(2, shoulder_angle, cal_data, math_center_offset=90, inverted=False)
+elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data, math_center_offset=180, inverted=True)
 wrist_cmd = map_angle_to_servo(4, wrist_angle, cal_data, math_center_offset=0, inverted=False)
 
 with ServoBus(MAC_PORT, baudrate=1000000, discard_echo=False) as servo_bus:
 
     # Move to target position
-    servo_bus.move_time_write(1, base_cmd, 2.0)
-    servo_bus.move_time_write(2, shoulder_cmd, 2.0)
-    servo_bus.move_time_write(3, elbow_cmd, 2.0)
-    servo_bus.move_time_write(4, wrist_cmd, 2.0)
+    servo_bus.move_time_write(1, base_cmd, 3.0)
+    servo_bus.move_time_write(2, shoulder_cmd, 3.0)
+    servo_bus.move_time_write(3, elbow_cmd, 3.0)
+    servo_bus.move_time_write(4, wrist_cmd, 1.5)
     open_gripper_angle = cal_data["gripper"]["min_angle"]
     servo_bus.move_time_write(6, open_gripper_angle, 1.5)
 
-    time.sleep(2)
+    time.sleep(3.5)
 
     close_gripper_angle = cal_data["gripper"]["max_angle"]
     servo_bus.move_time_write(6, close_gripper_angle, 1.5)
