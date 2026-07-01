@@ -85,25 +85,54 @@ analysis_img = cropped
 analysis_name = 'cropped'
 
 if None not in source_points:
+    def perimeter_color(img, x1, y1, x2, y2, pad=12):
+        h, w = img.shape[:2]
+        top = img[max(0, y1-pad):y1, x1:x2]
+        bottom = img[y2:min(h, y2+pad), x1:x2]
+        left = img[y1:y2, max(0, x1-pad):x1]
+        right = img[y1:y2, x2:min(w, x2+pad)]
+        samples = [arr.reshape(-1, 3) for arr in (top, bottom, left, right) if arr.size]
+        if not samples:
+            return np.array([0, 0, 0], dtype=np.uint8)
+        pixels = np.vstack(samples)
+        return np.mean(pixels, axis=0).astype(np.uint8)
+
     src_pts = np.array(source_points, dtype=np.float32)
     dst_pts = np.array([
-        [640, 0],
-        [320, 400],
-        [0, 400],
-        [640, 400]
+        [640, 0],   # top-right
+        [0, 0],     # top-left
+        [0, 400],   # bottom-left
+        [640, 400]  # bottom-right
     ], dtype=np.float32)
 
     H = cv2.getPerspectiveTransform(src_pts, dst_pts)
     warped = cv2.warpPerspective(cropped, H, (640, 400))
     cv2.imwrite('warped.jpg', warped)
-    analysis_img = warped
-    analysis_name = 'warped'
+
+    cleaned = warped.copy()
+    for corners in orig_corners:
+        pts = np.array(corners, dtype=np.float32).reshape(-1, 1, 2)
+        warped_pts = cv2.perspectiveTransform(pts, H).reshape(-1, 2).astype(np.int32)
+        x, y, w, h = cv2.boundingRect(warped_pts)
+        padding = 80
+        x1 = max(x - padding, 0)
+        y1 = max(y - padding, 0)
+        x2 = min(x + w + padding, warped.shape[1])
+        y2 = min(y + h + padding, warped.shape[0])
+
+        fill_color = perimeter_color(warped, x1, y1, x2, y2, pad=12)
+        cleaned[y1:y2, x1:x2] = fill_color
+
+    cv2.imwrite('warped_cleaned.jpg', cleaned)
+
+    analysis_img = cleaned
+    analysis_name = 'warped_cleaned'
 else:
     print('Not enough valid source points for homography; skipping warp.')
 
 hsv = cv2.cvtColor(analysis_img, cv2.COLOR_BGR2HSV)
 
-mask = cv2.inRange(hsv, (85, 50, 50), (105, 255, 255))
+mask = cv2.inRange(hsv, (0, 0, 50), (0, 0, 255))
 blur = cv2.GaussianBlur(mask, (5, 5), 0)
 M = cv2.moments(blur)
 if M.get('m00', 0) != 0:
