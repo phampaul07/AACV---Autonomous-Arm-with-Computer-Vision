@@ -4,6 +4,15 @@ import math
 import json  
 from pathlib import Path
 
+import argparse
+
+# Replace your hardcoded x and y with this block
+parser = argparse.ArgumentParser()
+parser.add_argument('--x', type=float, default=0.0, help="Target X on the board")
+parser.add_argument('--y', type=float, default=9, help="Target Y on the board")
+args = parser.parse_args()
+
+
 lib_path = Path(__file__).resolve().parents[1] / "core" 
 sys.path.insert(0, str(lib_path))
 from IK_solver import inverse_kinematics, map_angle_to_servo
@@ -40,19 +49,23 @@ except FileNotFoundError:
     print("Error: Could not find 'calibration_results.json'.")
     sys.exit(1)
 
-cal_data["wrist_roll"]["center_angle"] = 23.76
-cal_data["wrist_flex"]["center_angle"] = 90
+L1 = 115.48 # Length of the upper arm in mm
+L2 = 135.81 # Length of the forearm in mm
+L3 = 177.51 # Length of the end effector in mm
+Z_offset = 127 # Offset in the Z direction in mm
+Z_target = 75 # Target Z position in mm
+base_offset = 23.11
+base_angle_offset = 5
 
-L1 = 114 # Length of the upper arm in mm
-L2 = 135 # Length of the forearm in mm
-L3 = 155.64 # Length of the end effector in mm
-Z_offset = 119 # Offset in the Z direction in mm
-Z_target = 30 # Target Z position in mm
+in_x = args.x * 25.4 
+in_y = args.y * 25.4
 
-x = 0  # X position in mm
-y = 250  # Y position in mm 
+x = in_x
+y = in_y
 
-IK_result = inverse_kinematics(x, y, L1, L2, L3, Z_offset, Z_target)
+robot_x = x 
+robot_y = y + base_offset
+IK_result = inverse_kinematics(robot_x, robot_y, L1, L2, L3, Z_offset, Z_target)
 
 if IK_result is None:
     print("The target position is unreachable. Please choose a different position.")
@@ -60,10 +73,19 @@ if IK_result is None:
 
 base_angle, shoulder_angle, elbow_angle, wrist_angle = IK_result
 
-base_cmd = map_angle_to_servo(1, base_angle, cal_data, math_center_offset=90, inverted=False)
-shoulder_cmd = map_angle_to_servo(2, shoulder_angle, cal_data, math_center_offset=90, inverted=False)
-elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data, math_center_offset=180, inverted=True)
-wrist_cmd = map_angle_to_servo(4, wrist_angle, cal_data, math_center_offset=0, inverted=False)
+base_cmd = map_angle_to_servo(1, base_angle, cal_data)
+base_cmd += base_angle_offset
+shoulder_cmd = map_angle_to_servo(2, shoulder_angle, cal_data)
+elbow_cmd = map_angle_to_servo(3, elbow_angle, cal_data)
+wrist_cmd = map_angle_to_servo(4, wrist_angle, cal_data)
+
+
+print("\n--- SERVO COMMANDS ---")
+print(f"Base servo:     {base_cmd:.2f}°")
+print(f"Shoulder servo: {shoulder_cmd:.2f}°")
+print(f"Elbow servo:    {elbow_cmd:.2f}°")
+print(f"Wrist servo:    {wrist_cmd:.2f}°")
+print("----------------------\n")
 
 with ServoBus(MAC_PORT, baudrate=1000000, discard_echo=False) as servo_bus:
 
@@ -82,7 +104,7 @@ with ServoBus(MAC_PORT, baudrate=1000000, discard_echo=False) as servo_bus:
     time.sleep(2)
 
     print("Fold to resting position...")
-    for servo_id in [1, 2, 3, 4, 5, 6]:
+    for servo_id in [1, 2, 3, 4, 5]:
             name = servo_names[servo_id]
             state = RESTING_STATES[servo_id]
             
@@ -93,14 +115,3 @@ with ServoBus(MAC_PORT, baudrate=1000000, discard_echo=False) as servo_bus:
         # Give the motors time to fold back up before the script ends and cuts communication
     time.sleep(2.5)
     print("Sequence complete.")
-    
-
-
-
-
-
-
-
-
-
-

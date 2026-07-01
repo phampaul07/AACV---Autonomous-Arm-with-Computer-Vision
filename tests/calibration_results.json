@@ -3,36 +3,55 @@
         "id": 1,
         "min_angle": 15.8,
         "center_angle": 129.0,
-        "max_angle": 242.2
+        "max_angle": 242.2,
+        "reference_joint_angle": 90.0,
+        "reference_servo_angle": 126.48,
+        "inverted": false,
+        "servo_degrees_per_joint_degree": 1.0
     },
     "shoulder_lift": {
         "id": 2,
         "min_angle": 26.2,
         "center_angle": 129.8,
-        "max_angle": 233.5
+        "max_angle": 233.5,
+        "reference_joint_angle": 0.0,
+        "reference_servo_angle": 38.4,
+        "inverted": false,
+        "servo_degrees_per_joint_degree": 1.0
     },
     "elbow_flex": {
         "id": 3,
         "min_angle": 14.9,
         "center_angle": 111.7,
-        "max_angle": 208.6
+        "max_angle": 208.6,
+        "reference_joint_angle": 180.0,
+        "reference_servo_angle": 195.12,
+        "inverted": false,
+        "servo_degrees_per_joint_degree": 1.0
     },
     "wrist_flex": {
         "id": 4,
         "min_angle": 51.6,
         "center_angle": 139.3,
-        "max_angle": 227.0
+        "max_angle": 227.0,
+        "reference_joint_angle": 0.0,
+        "reference_servo_angle": 122.4,
+        "inverted": false,
+        "servo_degrees_per_joint_degree": 1.0
     },
     "wrist_roll": {
         "id": 5,
         "min_angle": -51.8,
-        "center_angle": 116.4,
-        "max_angle": 284.6
+        "center_angle": 207.84,
+        "max_angle": 284.6,
+        "fixed_angle": 116.4
     },
     "gripper": {
         "id": 6,
         "min_angle": 52.3,
         "center_angle": 115.2,
-        "max_angle": 178.3
+        "max_angle": 178.3,
+        "open_angle": 52.3,
+        "close_angle": 178.3
     }
 }
