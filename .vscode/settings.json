@@ -2,5 +2,6 @@
     "python.analysis.extraPaths": [
         "./lib/lewansoul-servo-bus-master/src/python",
         "./core"
-    ]
+    ],
+    "python-envs.defaultEnvManager": "ms-python.python:system"
 }
