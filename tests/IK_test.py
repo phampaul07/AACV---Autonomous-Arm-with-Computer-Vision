@@ -3,7 +3,8 @@ import time
 import math
 import json  
 from pathlib import Path
-
+import numpy as np
+from scipy.interpolate import RegularGridInterpolator
 import argparse
 
 # Replace your hardcoded x and y with this block
