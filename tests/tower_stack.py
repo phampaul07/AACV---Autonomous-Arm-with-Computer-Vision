@@ -2,10 +2,14 @@ import sys
 import time
 import json
 from pathlib import Path
+
 import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 
 
+# -----------------------------
+# Path setup
+# -----------------------------
 lib_path = Path(__file__).resolve().parents[1] / "core"
 sys.path.insert(0, str(lib_path))
 from IK_solver import inverse_kinematics, map_angle_to_servo
@@ -38,10 +42,25 @@ Z_target = 70
 base_offset = 23.11
 base_angle_offset = 9
 
-# Cube / stack settings
-BLOCK_HEIGHT_MM = 30
-LEFT_GRASP_BIAS_MM = -9.5
 
+# -----------------------------
+# Cube / stack settings
+# -----------------------------
+BLOCK_HEIGHT_MM = 30
+
+# This is ONLY for pickup/grabbing.
+# It helps the left side of the claw clear the block.
+LEFT_PICKUP_GRASP_BIAS_MM = -9.5
+
+# These are ONLY for placement.
+# Start at 0.0. Adjust later only if placement is still slightly off.
+PLACE_X_BIAS_MM = 20.32
+PLACE_Y_BIAS_MM = -33.02
+
+
+# -----------------------------
+# Servo names / rest state
+# -----------------------------
 servo_names = {
     1: "shoulder_pan",
     2: "shoulder_lift",
@@ -151,7 +170,20 @@ def apply_arm_correction(x_mm, y_mm, dx_interp, dy_interp, xs, ys):
     return corrected_x, corrected_y
 
 
-def move_like_ik_test(servo_bus, x_in, y_in, z_target, correction_data):
+# -----------------------------
+# Same movement calculation as IK_test.py
+# but with separate pickup/place bias
+# -----------------------------
+def move_like_ik_test(
+    servo_bus,
+    x_in,
+    y_in,
+    z_target,
+    correction_data,
+    use_pickup_bias=False,
+    extra_x_bias_mm=0.0,
+    extra_y_bias_mm=0.0,
+):
     dx_interp, dy_interp, xs, ys = correction_data
 
     target_x_mm = x_in * 25.4
@@ -166,10 +198,25 @@ def move_like_ik_test(servo_bus, x_in, y_in, z_target, correction_data):
         ys,
     )
 
-    # Extra left-side claw bias
-    if target_x_mm < 0:
-        corrected_x_mm += LEFT_GRASP_BIAS_MM
-        print(f"Applied left-side grasp bias: {LEFT_GRASP_BIAS_MM:+.2f} mm")
+    # Pickup-only grasp bias.
+    # This should NOT affect placement.
+    if use_pickup_bias and target_x_mm < 0:
+        corrected_x_mm += LEFT_PICKUP_GRASP_BIAS_MM
+        print(
+            f"Applied left-side PICKUP grasp bias: "
+            f"{LEFT_PICKUP_GRASP_BIAS_MM:+.2f} mm"
+        )
+
+    # Optional placement/fine-tuning bias.
+    # This is separate from the pickup bias.
+    corrected_x_mm += extra_x_bias_mm
+    corrected_y_mm += extra_y_bias_mm
+
+    if extra_x_bias_mm != 0.0 or extra_y_bias_mm != 0.0:
+        print(
+            f"Applied extra bias: "
+            f"dx={extra_x_bias_mm:+.2f} mm, dy={extra_y_bias_mm:+.2f} mm"
+        )
 
     robot_x = corrected_x_mm
     robot_y = corrected_y_mm + base_offset
@@ -214,6 +261,9 @@ def move_like_ik_test(servo_bus, x_in, y_in, z_target, correction_data):
     return True
 
 
+# -----------------------------
+# Gripper / rest helpers
+# -----------------------------
 def open_gripper(servo_bus):
     open_gripper_angle = cal_data["gripper"]["min_angle"]
     servo_bus.move_time_write(6, open_gripper_angle, 1.5)
@@ -262,7 +312,9 @@ def ask_float(prompt):
             print("Type a number or q to quit.")
 
 
-
+# -----------------------------
+# Main
+# -----------------------------
 def main():
     correction_data = load_arm_correction_interpolator()
 
@@ -271,6 +323,8 @@ def main():
     print("This moves like IK_test.py.")
     print(f"Pickup uses Z_target = {Z_target} mm.")
     print(f"Each new block automatically increases placement Z by {BLOCK_HEIGHT_MM} mm.")
+    print("Pickup uses left-side grasp bias only when grabbing.")
+    print("Placement does NOT use pickup grasp bias.")
     print("First block is stack level 0.")
     print("Type q to quit.\n")
 
@@ -310,6 +364,7 @@ def main():
                 pick_y,
                 Z_target,
                 correction_data,
+                use_pickup_bias=True,
             )
 
             if not success:
@@ -348,6 +403,9 @@ def main():
                 place_y,
                 place_z,
                 correction_data,
+                use_pickup_bias=False,
+                extra_x_bias_mm=PLACE_X_BIAS_MM,
+                extra_y_bias_mm=PLACE_Y_BIAS_MM,
             )
 
             if not success:
