@@ -16,7 +16,7 @@ from scipy.interpolate import RegularGridInterpolator
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--target-color",
+    "--color",
     type=str,
     default="red",
     choices=["red", "orange", "yellow", "green", "blue", "purple"],
