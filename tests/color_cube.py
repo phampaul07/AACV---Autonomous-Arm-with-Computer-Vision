@@ -763,7 +763,7 @@ def main():
 
         selected_color, target_detection = choose_target_detection(
             detections,
-            args.target_color,
+            args.color,
         )
 
         if target_detection is None:
