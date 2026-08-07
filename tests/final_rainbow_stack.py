@@ -90,22 +90,32 @@ base_angle_offset = 9
 # Cube / stack settings
 BLOCK_HEIGHT_MM = 30
 
-# Purple stays on the table and becomes the bottom of the tower.
 BASE_COLOR = "purple"
 
-# Bottom to top goal:
+# Bottom to top:
 # purple, blue, green, yellow, orange, red
-# Since purple is already the base, the robot only moves these:
+# Purple stays on the board as the base.
 STACK_ORDER = ["blue", "green", "yellow", "orange", "red"]
 
-# Pickup-only bias.
-# This helps the claw grab on the left side.
+# Pickup-only bias
 LEFT_PICKUP_GRASP_BIAS_MM = -9.5
 
-# Placement-only bias.
-# You tuned this from: commanded (5,11), actual around (4.2,12.3)
-PLACE_X_BIAS_MM = 20.32
-PLACE_Y_BIAS_MM = -33.02
+# Placement-only bias
+PLACE_X_BIAS_MM = 44.8
+PLACE_Y_BIAS_MM = -25.0
+
+# Safe resting movement
+# If this moves the claw TOWARD the tower, flip this to -12.0
+SAFE_BASE_NUDGE_DEG = 5.0
+
+SAFE_BASE_NUDGE_TIME = 1.0
+SAFE_ARM_LIFT_TIME = 2.0
+SAFE_BASE_REST_TIME = 1.5
+
+# Red is the last/top cube. Place it a little higher so it clears the stack.
+RED_EXTRA_Z_MM = 15.0
+
+LAST_BASE_CMD = None
 
 # Camera crop / warp
 CROP_START_X = 0
@@ -116,18 +126,14 @@ CROP_END_Y = 400
 WARP_WIDTH = 640
 WARP_HEIGHT = 400
 
-# ArUco marker edge used for mm/pixel scale
 TAG_3_TOP_EDGE_MM = 24.75
 
-# Manual y coordinate offset from your old vision code
 Y_COORD_OFFSET_MM = -45.0
 
-# Coordinate sign.
-# Your old code used pixel-left positive, so this is -1.
-# If the robot moves mirrored left/right, change this to 1.
+# Your older code used pixel-left positive.
+# If the arm moves mirrored left/right, change this to 1.
 X_SIGN = -1
 
-# Detection filtering
 MIN_MASK_AREA = 200
 
 
@@ -375,8 +381,8 @@ def detect_and_warp_board(cropped):
     cv2.imwrite("aruco_markers.jpg", display)
 
     if None in source_points:
-        print("Not enough valid source points for homography. Using cropped image.")
-        return cropped, corners, marker_3_corners
+        print("Not enough valid source points for homography. Stopping.")
+        sys.exit(1)
 
     src_pts = np.array(source_points, dtype=np.float32)
 
@@ -423,24 +429,24 @@ def detect_and_warp_board(cropped):
 # ============================================================
 rainbow_color_ranges = {
     "red": [
-            ((0, 40, 50), (5, 255, 255)),
-            ((160, 100, 50), (180, 255, 255)),
-        ],
-        "orange": [
-            ((12, 60, 100), (26, 255, 255)),
-        ],
-        "yellow": [
-            ((27, 40, 50), (35, 255, 255)),
-        ],
-        "green": [
-            ((40, 60, 50), (89, 255, 255)),
-        ],
-        "blue": [
-            ((90, 50, 100), (120, 255, 255)),
-        ],
-        "purple": [
-            ((121, 100, 50), (159, 255, 255)),
-        ],
+        ((0, 40, 50), (5, 255, 255)),
+        ((160, 40, 50), (180, 255, 255)),
+    ],
+    "orange": [
+        ((12, 60, 100), (26.5, 255, 255)),
+    ],
+    "yellow": [
+        ((80, 0, 230), (100, 40, 255)),
+    ],
+    "green": [
+        ((75, 80, 50), (89, 255, 255)),
+    ],
+    "blue": [
+        ((90, 50, 100), (120, 255, 255)),
+    ],
+    "purple": [
+        ((121, 70, 50), (159, 255, 255)),
+    ],
 }
 
 color_draw_bgr = {
@@ -775,6 +781,8 @@ def move_to_board_mm(
     extra_x_bias_mm=0.0,
     extra_y_bias_mm=0.0,
 ):
+    global LAST_BASE_CMD
+
     commands = compute_servo_commands(
         x_mm,
         y_mm,
@@ -790,6 +798,8 @@ def move_to_board_mm(
 
     base_cmd, shoulder_cmd, elbow_cmd, wrist_cmd = commands
 
+    LAST_BASE_CMD = base_cmd
+
     if args.dry_run:
         print("Dry run enabled. Not moving servos.")
         return True
@@ -802,6 +812,12 @@ def move_to_board_mm(
     time.sleep(3.5)
 
     return True
+
+
+def get_rest_angle(servo_id):
+    name = servo_names[servo_id]
+    state = RESTING_STATES[servo_id]
+    return cal_data[name][f"{state}_angle"]
 
 
 def open_gripper(servo_bus):
@@ -824,18 +840,52 @@ def close_gripper(servo_bus):
     time.sleep(2)
 
 
-def rest_arm(servo_bus, holding_block=False):
-    print("Fold to resting position...")
+def rest_arm(servo_bus, holding_block=False, safe_nudge=False):
+    global LAST_BASE_CMD
+
+    print("Retreating to resting position...")
 
     if not args.dry_run:
-        for servo_id in [1, 2, 3, 4, 5]:
-            name = servo_names[servo_id]
-            state = RESTING_STATES[servo_id]
-            rest_angle = cal_data[name][f"{state}_angle"]
-            servo_bus.move_time_write(servo_id, rest_angle, 2.0)
+        # Step 1: Optional base nudge.
+        # Only turn this on after placement, not after pickup.
+        if safe_nudge and LAST_BASE_CMD is not None:
+            base_name = servo_names[1]
+            base_min = cal_data[base_name].get("min_angle", -999)
+            base_max = cal_data[base_name].get("max_angle", 999)
 
-        time.sleep(2.5)
+            safe_base_cmd = LAST_BASE_CMD + SAFE_BASE_NUDGE_DEG
+            safe_base_cmd = clamp(safe_base_cmd, base_min, base_max)
 
+            print(
+                f"Nudging base away from tower: "
+                f"{LAST_BASE_CMD:.2f}° -> {safe_base_cmd:.2f}°"
+            )
+
+            servo_bus.move_time_write(1, safe_base_cmd, SAFE_BASE_NUDGE_TIME)
+            time.sleep(SAFE_BASE_NUDGE_TIME + 0.3)
+
+            LAST_BASE_CMD = safe_base_cmd
+
+        # Step 2: Lift/fold shoulder, elbow, wrist.
+        print("Lifting/folding arm...")
+
+        for servo_id in [2, 3, 4, 5]:
+            rest_angle = get_rest_angle(servo_id)
+            servo_bus.move_time_write(servo_id, rest_angle, SAFE_ARM_LIFT_TIME)
+
+        time.sleep(SAFE_ARM_LIFT_TIME + 0.5)
+
+        # Step 3: Return base to resting center after arm is lifted.
+        print("Returning base to resting center...")
+
+        base_rest_angle = get_rest_angle(1)
+        servo_bus.move_time_write(1, base_rest_angle, SAFE_BASE_REST_TIME)
+
+        time.sleep(SAFE_BASE_REST_TIME + 0.3)
+
+        LAST_BASE_CMD = base_rest_angle
+
+    # Step 4: Handle gripper.
     if holding_block:
         print("Keeping claw closed because it is holding a block.")
     else:
@@ -843,7 +893,6 @@ def rest_arm(servo_bus, holding_block=False):
         close_gripper(servo_bus)
 
     print("Rest complete.")
-
 
 def wait_if_needed(message):
     if args.auto or args.dry_run:
@@ -882,7 +931,7 @@ def pick_block(servo_bus, color, cube_data, correction_data):
     close_gripper(servo_bus)
 
     print("Returning to rest while holding block...")
-    rest_arm(servo_bus, holding_block=True)
+    rest_arm(servo_bus, holding_block=True, safe_nudge=False)
 
     return True
 
@@ -896,6 +945,10 @@ def place_block_on_stack(
     correction_data,
 ):
     place_z = Z_target + stack_level * BLOCK_HEIGHT_MM
+
+    if color == "red":
+        place_z += RED_EXTRA_Z_MM
+        print(f"Applied extra red placement height: +{RED_EXTRA_Z_MM:.2f} mm")
 
     print("\n==============================")
     print(f"Placing {color.upper()} cube on stack")
@@ -923,8 +976,8 @@ def place_block_on_stack(
     print("Opening gripper to release block...")
     open_gripper(servo_bus)
 
-    print("Returning to rest and closing claw...")
-    rest_arm(servo_bus, holding_block=False)
+    print("Returning to rest with placement nudge and closing claw...")
+    rest_arm(servo_bus, holding_block=False, safe_nudge=True)
 
     return True
 
@@ -961,8 +1014,8 @@ def scan_cubes():
 # Main
 # ============================================================
 def main():
-    print("\nFinal Rainbow Stack")
-    print("-------------------")
+    print("\nFinal Rainbow Stack with Safe Rest")
+    print("----------------------------------")
     print("Goal stack order bottom to top:")
     print("purple, blue, green, yellow, orange, red")
     print("\nPurple is NOT picked up.")
@@ -970,6 +1023,8 @@ def main():
     print("Every other cube gets stacked onto purple.")
     print(f"Block height: {BLOCK_HEIGHT_MM} mm")
     print(f"Port: {PORT}")
+    print(f"Safe base nudge: {SAFE_BASE_NUDGE_DEG:+.2f}°")
+    print(f"Red extra placement height: +{RED_EXTRA_Z_MM:.2f} mm")
     print("")
 
     correction_data = load_arm_correction_interpolator()
@@ -1006,10 +1061,10 @@ def main():
         input("Press ENTER to begin full rainbow stack...")
 
     with ServoBus(PORT, baudrate=1000000, discard_echo=False) as servo_bus:
-        rest_arm(servo_bus, holding_block=False)
+        rest_arm(servo_bus, holding_block=False, safe_nudge=False)
 
         # Purple is already level 0.
-        # First moved block, blue, goes on top of purple at level 1.
+        # Blue goes on top of purple at level 1.
         stack_level = 1
 
         for color in STACK_ORDER:
@@ -1043,12 +1098,10 @@ def main():
 
             stack_level += 1
 
-            print(f"\nFinished {color}. Next stack level: {stack_level}\n")
+        print(f"\nFinished {color}. Next stack level: {stack_level}\n")
 
-        print("\nFinal rest...")
-        rest_arm(servo_bus, holding_block=False)
-
-    print("\nRainbow tower stack complete.")
+    print("\nFinal safe rest...")
+    rest_arm(servo_bus, holding_block=False)
 
 
 if __name__ == "__main__":
