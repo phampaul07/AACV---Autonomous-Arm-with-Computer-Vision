@@ -16,20 +16,6 @@ from scipy.interpolate import RegularGridInterpolator
 parser = argparse.ArgumentParser()
 
 parser.add_argument(
-    "--port",
-    type=str,
-    default="/dev/ttyACM0",
-    help="Servo controller serial port. Pi is usually /dev/ttyACM0 or /dev/ttyUSB0.",
-)
-
-parser.add_argument(
-    "--camera-index",
-    type=int,
-    default=0,
-    help="Camera index. Usually 0.",
-)
-
-parser.add_argument(
     "--dry-run",
     action="store_true",
     help="Run vision and IK, but do not move servos.",
@@ -75,8 +61,10 @@ from lewansoul_servo_bus import ServoBus
 # ============================================================
 # Main config
 # ============================================================
-PORT = args.port
-CAMERA_INDEX = args.camera_index
+# Fixed rather than CLI args -- this only ever runs on the Raspberry Pi
+# against one webcam, so there's nothing to actually configure at runtime.
+PORT = "/dev/ttyACM0"
+CAMERA_INDEX = 0
 
 CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 

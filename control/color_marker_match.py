@@ -39,8 +39,6 @@ from scipy.interpolate import RegularGridInterpolator
 # Argument parser
 # ============================================================
 parser = argparse.ArgumentParser()
-parser.add_argument("--port", type=str, default="/dev/ttyACM0")
-parser.add_argument("--camera-index", type=int, default=0)
 parser.add_argument("--dry-run", action="store_true")
 parser.add_argument("--auto", action="store_true")
 parser.add_argument("--color", type=str, default=None)
@@ -75,8 +73,10 @@ from lewansoul_servo_bus import ServoBus
 # ============================================================
 # Main config
 # ============================================================
-PORT = args.port
-CAMERA_INDEX = args.camera_index
+# Fixed rather than CLI args -- this only ever runs on the Raspberry Pi
+# against one webcam, so there's nothing to actually configure at runtime.
+PORT = "/dev/ttyACM0"
+CAMERA_INDEX = 0
 CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 L1 = 115.48

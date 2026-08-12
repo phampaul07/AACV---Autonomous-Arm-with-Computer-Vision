@@ -154,18 +154,18 @@ lib/             vendored lewansoul-servo-bus library (third-party)
 pip install -r requirements.txt
 
 # Rainbow stack
-python control/final_rainbow_stack.py --port /dev/ttyACM0 --dry-run
+python control/final_rainbow_stack.py --dry-run
 
 # Color-to-marker matching
-python control/color_marker_match.py --port /dev/ttyACM0 --dry-run
+python control/color_marker_match.py --dry-run
 ```
+
+Serial port and camera index are fixed in-script (`/dev/ttyACM0` and webcam index `0`) rather than CLI flags, since these scripts only ever run against one Raspberry Pi + one webcam setup.
 
 | Flag | What it does |
 |---|---|
 | `--dry-run` | Runs the full vision + correction + IK pipeline and prints what it *would* do, without moving any servos |
 | `--auto` | Runs the pick/place sequence without waiting for a manual ENTER between steps |
-| `--camera-index` | Selects a specific webcam, if more than one is connected |
-| `--port` | Serial port for the servo bus (defaults to `/dev/ttyACM0`, the typical Raspberry Pi path) |
 
 ## Known Limitations
 
