@@ -23,7 +23,12 @@ from lewansoul_servo_bus import ServoBus
 MAC_PORT = "/dev/cu.usbmodem5C4C1247351"
 
 INCH_TO_MM = 25.4
-CORRECTIONS_PATH = "arm_corrections.json"
+
+# This script lives in calibration/ next to the JSON files it reads/writes
+# -- build paths from its own location instead of assuming a particular cwd.
+CALIBRATION_DIR = Path(__file__).resolve().parent
+CALIBRATION_RESULTS_PATH = CALIBRATION_DIR / "calibration_results.json"
+CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 L1 = 115.48
 L2 = 135.81
@@ -69,10 +74,10 @@ RESTING_STATES = {
 # -----------------------------
 def load_calibration():
     try:
-        with open("calibration_results.json", "r") as f:
+        with open(CALIBRATION_RESULTS_PATH, "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        print("Error: Could not find calibration_results.json")
+        print(f"Error: Could not find {CALIBRATION_RESULTS_PATH}")
         sys.exit(1)
 
 

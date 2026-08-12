@@ -29,11 +29,15 @@ RESTING_STATES = {
     6: "max"      # ~178.3°
 }
 
+# calibration/ lives next to diagnostics/ at the repo root -- build the
+# path from this script's own location instead of assuming a particular cwd.
+CALIBRATION_RESULTS_PATH = Path(__file__).resolve().parents[1] / "calibration" / "calibration_results.json"
+
 try:
-    with open('calibration_results.json', 'r') as f:
+    with open(CALIBRATION_RESULTS_PATH, 'r') as f:
         cal_data = json.load(f)
 except FileNotFoundError:
-    print("Error: Could not find 'calibration_results.json'.")
+    print(f"Error: Could not find '{CALIBRATION_RESULTS_PATH}'.")
     sys.exit(1)
 
 def servo_sweep(servo_bus, servo_id, min_ang, center_ang, max_ang, rest_ang):

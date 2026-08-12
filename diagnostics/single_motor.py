@@ -12,7 +12,11 @@ from lewansoul_servo_bus import ServoBus
 MAC_PORT = '/dev/cu.usbmodem5C4C1247351'  
 
 
-with open('calibration_results.json', 'r') as f:
+# calibration/ lives next to diagnostics/ at the repo root -- build the
+# path from this script's own location instead of assuming a particular cwd.
+CALIBRATION_RESULTS_PATH = Path(__file__).resolve().parents[1] / "calibration" / "calibration_results.json"
+
+with open(CALIBRATION_RESULTS_PATH, 'r') as f:
         cal_data = json.load(f)
 
 target_motor = "shoulder_pan"

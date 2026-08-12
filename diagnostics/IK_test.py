@@ -42,15 +42,19 @@ RESTING_STATES = {
     6: "max"      
 }
 
+# calibration/ lives next to diagnostics/ at the repo root -- build paths
+# from this script's own location instead of assuming a particular cwd.
+CALIBRATION_DIR = Path(__file__).resolve().parents[1] / "calibration"
+
 try:
-    with open('calibration_results.json', 'r') as f:
+    with open(CALIBRATION_DIR / "calibration_results.json", 'r') as f:
         cal_data = json.load(f)
 except FileNotFoundError:
-    print("Error: Could not find 'calibration_results.json'.")
+    print(f"Error: Could not find calibration_results.json in {CALIBRATION_DIR}.")
     sys.exit(1)
 
 
-CORRECTIONS_PATH = "arm_corrections.json"
+CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 
 def load_arm_correction_interpolator(path=CORRECTIONS_PATH):

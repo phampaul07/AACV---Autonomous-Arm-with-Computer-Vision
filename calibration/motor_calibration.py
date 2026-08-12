@@ -8,7 +8,12 @@ sys.path.insert(0, str(lib_path))
 
 from lewansoul_servo_bus import ServoBus
 
-MAC_PORT = '/dev/cu.usbmodem5C4C1247351'  
+MAC_PORT = '/dev/cu.usbmodem5C4C1247351'
+
+# This script lives in calibration/ next to calibration_results.json --
+# build the output path from its own location instead of assuming a
+# particular cwd.
+CALIBRATION_RESULTS_PATH = Path(__file__).resolve().parent / "calibration_results.json"
 
 servo_names = {
     1: "shoulder_pan",
@@ -61,7 +66,7 @@ try:
 
 except KeyboardInterrupt:
     print("\n\nScan stopped by user.")
-    print("Calibration complete. Writing results to 'calibration_results.json'...")
+    print(f"Calibration complete. Writing results to '{CALIBRATION_RESULTS_PATH}'...")
     
     final_data = {}
     
@@ -80,7 +85,7 @@ except KeyboardInterrupt:
                 "max_angle": round(max_ang, 1)
             }
 
-    with open('calibration_results.json', 'w') as f:
+    with open(CALIBRATION_RESULTS_PATH, 'w') as f:
         json.dump(final_data, f, indent=4)
         
     print("Results saved.")

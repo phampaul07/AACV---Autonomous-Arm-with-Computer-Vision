@@ -35,12 +35,16 @@ args = parser.parse_args()
 # -----------------------------
 # Path setup
 # -----------------------------
-core_path = Path(__file__).resolve().parents[1] / "core"
+# NOTE: this script was archived into archive/legacy-scripts/, which is TWO
+# directory levels below the repo root (unlike control/, calibration/, and
+# diagnostics/, which are one level down) -- so it needs parents[2], not
+# parents[1], to land on the repo root.
+core_path = Path(__file__).resolve().parents[2] / "core"
 sys.path.insert(0, str(core_path))
 from IK_solver import inverse_kinematics, map_angle_to_servo
 
 servo_lib_path = (
-    Path(__file__).resolve().parents[1]
+    Path(__file__).resolve().parents[2]
     / "lib"
     / "lewansoul-servo-bus-master"
     / "src"
@@ -49,6 +53,8 @@ servo_lib_path = (
 sys.path.insert(0, str(servo_lib_path))
 from lewansoul_servo_bus import ServoBus
 
+CALIBRATION_DIR = Path(__file__).resolve().parents[2] / "calibration"
+
 
 # -----------------------------
 # Config
@@ -56,7 +62,7 @@ from lewansoul_servo_bus import ServoBus
 PORT = "/dev/ttyACM0"  # Raspberry Pi
 # PORT = "/dev/cu.usbmodem5C4C1247351"  # Mac
 
-CORRECTIONS_PATH = "arm_corrections.json"
+CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 # Arm geometry, same as IK_test.py
 L1 = 115.48
@@ -122,10 +128,10 @@ RESTING_STATES = {
 # -----------------------------
 def load_calibration():
     try:
-        with open("calibration_results.json", "r") as f:
+        with open(CALIBRATION_DIR / "calibration_results.json", "r") as f:
             return json.load(f)
     except FileNotFoundError:
-        print("Error: Could not find calibration_results.json.")
+        print(f"Error: Could not find calibration_results.json in {CALIBRATION_DIR}.")
         sys.exit(1)
 
 

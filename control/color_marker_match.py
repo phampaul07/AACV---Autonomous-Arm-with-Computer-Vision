@@ -57,6 +57,10 @@ core_path = Path(__file__).resolve().parents[1] / "core"
 sys.path.insert(0, str(core_path))
 from IK_solver import inverse_kinematics, map_angle_to_servo
 
+# calibration/ lives next to control/ at the repo root -- build the path
+# from this script's own location instead of assuming a particular cwd.
+CALIBRATION_DIR = Path(__file__).resolve().parents[1] / "calibration"
+
 servo_lib_path = (
     Path(__file__).resolve().parents[1]
     / "lib"
@@ -73,7 +77,7 @@ from lewansoul_servo_bus import ServoBus
 # ============================================================
 PORT = args.port
 CAMERA_INDEX = args.camera_index
-CORRECTIONS_PATH = "arm_corrections.json"
+CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 L1 = 115.48
 L2 = 135.81
@@ -171,10 +175,10 @@ RESTING_STATES = {
 # gripper had to be hardcoded to 0/180 instead of real calibrated angles)
 # ============================================================
 try:
-    with open("calibration_results.json", "r") as f:
+    with open(CALIBRATION_DIR / "calibration_results.json", "r") as f:
         cal_data = json.load(f)
 except FileNotFoundError:
-    print("Error: Could not find calibration_results.json.")
+    print(f"Error: Could not find calibration_results.json in {CALIBRATION_DIR}.")
     sys.exit(1)
 
 

@@ -1,1 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
 
+# macOS
+.DS_Store
+
+# Runtime debug output written by the vision scripts (camera captures,
+# HSV masks, warped/cleaned board views, ArUco overlays, etc.) -- not
+# source, shouldn't be committed. Curated images for docs go in
+# docs/images/ instead, which is explicitly kept.
+*.jpg
+*.jpeg
+*.png
+!docs/images/**

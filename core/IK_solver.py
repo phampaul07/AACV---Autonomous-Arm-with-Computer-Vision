@@ -1,13 +1,15 @@
-import json
 import math
-import sys 
 
-try:
-    with open('calibration_results.json', 'r') as f:
-        cal_data = json.load(f)
-except FileNotFoundError:
-    print("Error: Could not find 'calibration_results.json'.")
-    sys.exit(1)
+# Note: this module used to load calibration_results.json itself at import
+# time, using a bare relative path (assumed the caller's cwd happened to be
+# tests/). That load was never actually used anywhere in this file --
+# map_angle_to_servo() below takes cal_data as a parameter from the caller
+# instead -- so it was just dead code that could crash on import (sys.exit)
+# depending on which directory a script was run from. Removed; every
+# control/calibration/diagnostics script loads its own cal_data from
+# calibration/calibration_results.json using a path built from its own
+# location.
+
 
 def inverse_kinematics(x, y, L1, L2, L3, Z_offset, Z_target):
     #Measurement units in mm 

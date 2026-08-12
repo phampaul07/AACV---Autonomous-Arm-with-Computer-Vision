@@ -32,11 +32,13 @@ RESTING_STATES = {
     6: "max"      
 }
 
+CALIBRATION_RESULTS_PATH = Path(__file__).resolve().parent / "calibration_results.json"
+
 try:
-    with open('calibration_results.json', 'r') as f:
+    with open(CALIBRATION_RESULTS_PATH, 'r') as f:
         cal_data = json.load(f)
 except FileNotFoundError:
-    print("Error: Could not find 'calibration_results.json'.")
+    print(f"Error: Could not find '{CALIBRATION_RESULTS_PATH}'.")
     sys.exit(1)
 
 # Convert your desired Math Angles to Hardware Angles using your JSON!

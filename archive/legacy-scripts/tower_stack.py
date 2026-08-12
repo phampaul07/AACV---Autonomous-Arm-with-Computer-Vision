@@ -10,12 +10,16 @@ from scipy.interpolate import RegularGridInterpolator
 # -----------------------------
 # Path setup
 # -----------------------------
-lib_path = Path(__file__).resolve().parents[1] / "core"
+# NOTE: this script was archived into archive/legacy-scripts/, which is TWO
+# directory levels below the repo root (unlike control/, calibration/, and
+# diagnostics/, which are one level down) -- so it needs parents[2], not
+# parents[1], to land on the repo root.
+lib_path = Path(__file__).resolve().parents[2] / "core"
 sys.path.insert(0, str(lib_path))
 from IK_solver import inverse_kinematics, map_angle_to_servo
 
 lib_path = (
-    Path(__file__).resolve().parents[1]
+    Path(__file__).resolve().parents[2]
     / "lib"
     / "lewansoul-servo-bus-master"
     / "src"
@@ -24,13 +28,15 @@ lib_path = (
 sys.path.insert(0, str(lib_path))
 from lewansoul_servo_bus import ServoBus
 
+CALIBRATION_DIR = Path(__file__).resolve().parents[2] / "calibration"
+
 
 # -----------------------------
 # Same config as IK_test.py
 # -----------------------------
 MAC_PORT = "/dev/cu.usbmodem5C4C1247351"
 
-CORRECTIONS_PATH = "arm_corrections.json"
+CORRECTIONS_PATH = CALIBRATION_DIR / "arm_corrections.json"
 
 L1 = 115.48
 L2 = 135.81
@@ -84,10 +90,10 @@ RESTING_STATES = {
 # Load calibration
 # -----------------------------
 try:
-    with open("calibration_results.json", "r") as f:
+    with open(CALIBRATION_DIR / "calibration_results.json", "r") as f:
         cal_data = json.load(f)
 except FileNotFoundError:
-    print("Error: Could not find 'calibration_results.json'.")
+    print(f"Error: Could not find calibration_results.json in {CALIBRATION_DIR}.")
     sys.exit(1)
 
 
