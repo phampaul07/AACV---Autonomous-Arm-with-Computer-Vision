@@ -35,6 +35,10 @@ The project has two objectives, both built on the same core vision → correctio
 
 Every cycle, regardless of objective, follows the same shape: look at the workspace, convert what the camera sees into millimeters, correct for the arm's known physical inaccuracy, solve inverse kinematics, convert that into real servo commands, then move.
 
+## Sped-Up Rainbow Stack Demonstration: 
+https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
+
+
 ## Pipeline
 
 1. **Camera capture** (`vision/vision.py`) — grabs a frame from the overhead webcam and crops it to the workspace.
