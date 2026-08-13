@@ -34,8 +34,36 @@ The project has two objectives, both built on the same core vision → correctio
 
 Every cycle, regardless of objective, follows the same shape: look at the workspace, convert what the camera sees into millimeters, correct for the arm's known physical inaccuracy, solve inverse kinematics, convert that into real servo commands, then move.
 
-## Sped-Up Rainbow Stack Demonstration: 
+## Rainbow Stack Demonstration 
 https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
+
+### Color-to-Marker Matching Demonstration
+
+**1 block:**
+
+https://github.com/user-attachments/assets/0339e2e1-768a-4214-9200-37bc0f3b5590
+
+
+
+**2 blocks:**
+
+https://github.com/user-attachments/assets/ac4280dd-e74f-4bfe-a10e-287be266cade
+
+
+
+**3 blocks:**
+
+https://github.com/user-attachments/assets/d50a6ca7-8a57-48fc-9bc0-4a4e0f4cb001
+
+
+
+
+**4 blocks:**
+
+https://github.com/user-attachments/assets/bc9203bc-570f-4966-b7b6-78849c776dac
+
+
+
 
 
 ## Pipeline
@@ -240,11 +268,6 @@ The `-45 mm` offset on Y exists because the arm's actual physical pivot point si
 
 - Arm design and base hardware: the open-source **SO-101 follower arm**, built from its published STL files and reference code — not designed by us, but sourced, 3D-printed, and assembled ourselves. All autonomous vision and control logic in this repo was written from scratch, independent of the arm's stock scripts.
 - Servo communication: [`lewansoul-servo-bus`](lib/lewansoul-servo-bus-master) (vendored third-party library — see its own README/LICENSE for details).
-
-## Contact
-
-If you have any questions or comments about this project, feel free to reach out at [phampp07@gmail.com](mailto:phampp07@gmail.com).
-<!-- Add a GitHub profile / LinkedIn / personal site link here if you want one listed. -->
 
 ---
 
