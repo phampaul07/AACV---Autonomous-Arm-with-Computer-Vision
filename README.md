@@ -40,6 +40,12 @@ https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 
 *Stacks the cubes in ascending rainbow order.*
 
+<p align="center">
+<img src="docs/images/tower_stack_com.jpg" width="600" alt="Tower stack center-of-mass detection">
+</p>
+<p align="center"><sub>Detected center-of-mass for all six stacked cubes, overlaid on the warped workspace image.</sub></p>
+<!-- Placeholder: swap in a captured frame from the rainbow stack run showing the COM dot for all 6 cubes. -->
+
 ### Color-to-Marker Matching Demonstration
 
 **1 block:**
@@ -201,12 +207,24 @@ P_dst = H · P_raw
 
 Every downstream measurement — cube positions, marker positions, the mm/pixel scale — happens in this flat, top-down warped space rather than the original angled camera view.
 
+<p align="center">
+<img src="docs/images/pipeline_perspective_warp.jpg" width="700" alt="Raw camera capture next to the warped, top-down workspace">
+</p>
+<p align="center"><sub>Raw angled camera capture (left) vs. the homography-warped, top-down 640×400 canonical view (right).</sub></p>
+<!-- Placeholder: side-by-side of the raw frame and the cv2.getPerspectiveTransform output. -->
+
 ### Noise reduction
 
 High-contrast regions — the black/white ArUco patterns and the white robot claw — were producing false-positive color detections, so a two-stage cleanup pass runs before any HSV thresholding:
 
 1. **Marker removal.** A mask is built from all detected marker polygons in the warped image, each dilated by an extra 10 mm via `cv2.dilate()` to fully cover the tag plus a small margin, then subtracted from the color mask with `cv2.bitwise_not(tag_mask)`.
 2. **Claw removal.** The claw is located with a threshold-based bounding box, then that region is filled in with the mean color sampled from its perimeter — removing the claw's bright, high-contrast footprint from the mask without leaving an obvious hole.
+
+<p align="center">
+<img src="docs/images/pipeline_noise_reduction.jpg" width="700" alt="Before and after marker and claw removal">
+</p>
+<p align="center"><sub>Before (left) and after (right) marker dilation/removal and claw perimeter-fill cleanup.</sub></p>
+<!-- Placeholder: before/after frame showing the marker + claw masks painted out. -->
 
 ### HSV color segmentation
 
@@ -223,6 +241,12 @@ After cleanup, the warped image is thresholded per color using `cv2.inRange()`, 
 
 Red needs two disjoint hue ranges since red wraps around both ends of OpenCV's 0–180 hue scale. Yellow's unusually tight, low-saturation range exists because under this setup's lighting, yellow reads closer to a bright near-white than a saturated color — see [Known Limitations](#known-limitations) for more on warm-color detection being harder than cool-color detection in general.
 
+<p align="center">
+<img src="docs/images/pipeline_hsv_masks.jpg" width="700" alt="Per-color HSV threshold masks">
+</p>
+<p align="center"><sub>Binary HSV masks for each of the six target colors after `cv2.inRange()` thresholding.</sub></p>
+<!-- Placeholder: grid of the 6 per-color cv2.inRange() masks side by side. -->
+
 ### Center-of-mass extraction
 
 Each color mask is smoothed with a 5×5 Gaussian blur to reduce residual noise, then its centroid is computed from the mask's raw spatial image moments via `cv2.moments()`:
@@ -233,6 +257,12 @@ cY = M["m01"] / M["m00"]
 ```
 
 That (cX, cY) pixel coordinate is the cube's detected pickup point.
+
+<p align="center">
+<img src="docs/images/pipeline_color_to_marker_com.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
+</p>
+<p align="center"><sub>Full color-to-marker pipeline: warped frame with each detected cube's center-of-mass matched to its corresponding ArUco marker ID.</sub></p>
+<!-- Placeholder: annotated frame from color_marker_match.py showing cube COM -> marker ID pairings. -->
 
 ### Physical scale calibration
 
