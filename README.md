@@ -35,6 +35,10 @@ The project has two objectives, both built on the same core vision → correctio
 
 Every cycle, regardless of objective, follows the same shape: look at the workspace, convert what the camera sees into millimeters, correct for the arm's known physical inaccuracy, solve inverse kinematics, convert that into real servo commands, then move.
 
+## Sped-Up Rainbow Stack Demonstration: 
+https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
+
+
 ## Pipeline
 
 1. **Camera capture** (`vision/vision.py`) — grabs a frame from the overhead webcam and crops it to the workspace.
@@ -127,14 +131,89 @@ On top of both of these, a handful of small, deliberately *separate* task-specif
 
 ## Vision System
 
-> Brief for now — a full writeup of this section is still in progress.
+The vision system's job is to reliably locate every colored cube on the mat, find the four corner ArUco markers, and (depending on the task) find the additional marker IDs 4–9 — then convert all of that into metric (X_mm, Y_mm) target vectors the arm can act on. It's built entirely on OpenCV and OpenCV's ArUco library, through four core stages:
 
-The vision pipeline converts a raw camera frame into cube and marker positions in millimeters:
+- Reference marker tracking & boundary extraction
+- Planar perspective homography & orthorectification
+- Image preprocessing & noise reduction
+- Multi-color HSV identification & center-of-mass (COM) localization
 
-1. **Reference marker tracking & boundary extraction** — detect the four corner ArUco markers to find the mat's boundary.
-2. **Perspective homography** — warp the workspace into a flat, top-down canonical view so pixel measurements correspond to real, undistorted positions.
-3. **Preprocessing / noise reduction** — mask out ArUco marker regions and the bright claw from the analysis image so neither is mistaken for cube color.
-4. **HSV color segmentation & center-of-mass localization** — threshold each color in HSV space, then compute each cube's center of mass from image moments for a precise pickup point.
+### Why ArUco, and why 3D-printed markers specifically
+
+The board-detection approach went through three iterations. The first version used four hardcoded pixel coordinates for the mat's corners — no dynamic adaptation at all, so any change to the camera position, the mat, or basically anything else broke it immediately. The second version moved to ArUco markers detected via `cv2.aruco.ArucoDetector`, which fixed the adaptability problem but introduced a new one: the markers were printed on paper, and paper glares under normal room lighting enough that the camera would intermittently fail to identify them. The third and final iteration replaced those with 3D-printed markers in matte filament, which are far less reflective — this produced stable ID identification and zero marker dropouts across varying lighting conditions.
+
+IDs 0–3 mark the four corners of the mat and are used to compute the homography matrix; ID 3 is also reused as the physical scale reference (more below). IDs 4–9 are the color-to-marker task's placement targets.
+
+### Camera setup
+
+The camera sits 736.6 mm above the mat and captures a 640×400 px cropped workspace image. Camera hardware parameters (exposure, gain, etc.) are locked to fixed baseline values rather than left on auto, so color readings stay consistent between frames instead of drifting as the camera re-exposes.
+
+### Perspective warp
+
+To maximize the usable boundary, each corner marker's outer-most vertex is used as its source point (e.g. marker ID 0 sits in the bottom-left of the mat, so its bottom-left corner vertex is the source point). The four resulting source points define a planar homography matrix `H ∈ R^(3×3)`, computed via Direct Linear Transform through `cv2.getPerspectiveTransform()`, which warps the workspace into a canonical 640×400 rectangular image:
+
+```
+P_dst = H · P_raw
+
+[u_warped]       [u_raw]
+[v_warped]  ~ H  [v_raw]
+[   1    ]       [  1  ]
+```
+
+Every downstream measurement — cube positions, marker positions, the mm/pixel scale — happens in this flat, top-down warped space rather than the original angled camera view.
+
+### Noise reduction
+
+High-contrast regions — the black/white ArUco patterns and the white robot claw — were producing false-positive color detections, so a two-stage cleanup pass runs before any HSV thresholding:
+
+1. **Marker removal.** A mask is built from all detected marker polygons in the warped image, each dilated by an extra 10 mm via `cv2.dilate()` to fully cover the tag plus a small margin, then subtracted from the color mask with `cv2.bitwise_not(tag_mask)`.
+2. **Claw removal.** The claw is located with a threshold-based bounding box, then that region is filled in with the mean color sampled from its perimeter — removing the claw's bright, high-contrast footprint from the mask without leaving an obvious hole.
+
+### HSV color segmentation
+
+After cleanup, the warped image is thresholded per color using `cv2.inRange()`, with each color tuned to its own hue/saturation/value range:
+
+| Target Color | Hue Range (H) | Saturation Range (S) | Value Range (V) |
+|---|---|---|---|
+| Red | [0, 5] ∪ [160, 180] | [40, 255] | [50, 255] |
+| Orange | [12, 30] | [60, 255] | [100, 255] |
+| Yellow | [80, 100] | [0, 40] | [230, 255] |
+| Green | [75, 89] | [80, 255] | [50, 255] |
+| Blue | [90, 120] | [50, 255] | [100, 255] |
+| Purple | [121, 159] | [70, 255] | [50, 255] |
+
+Red needs two disjoint hue ranges since red wraps around both ends of OpenCV's 0–180 hue scale. Yellow's unusually tight, low-saturation range exists because under this setup's lighting, yellow reads closer to a bright near-white than a saturated color — see [Known Limitations](#known-limitations) for more on warm-color detection being harder than cool-color detection in general.
+
+### Center-of-mass extraction
+
+Each color mask is smoothed with a 5×5 Gaussian blur to reduce residual noise, then its centroid is computed from the mask's raw spatial image moments via `cv2.moments()`:
+
+```
+cX = M["m10"] / M["m00"]
+cY = M["m01"] / M["m00"]
+```
+
+That (cX, cY) pixel coordinate is the cube's detected pickup point.
+
+### Physical scale calibration
+
+Marker ID 3 doubles as a known-size physical reference: its real edge length is 24.75 mm, and a pixel-to-millimeter ratio (`S_pixel`) is derived by averaging all four of its warped boundary edge lengths against that known measurement. Every pixel distance measured anywhere on the board — cube positions, marker positions — is multiplied by this single ratio to get millimeters.
+
+### Coordinate origin mapping
+
+The coordinate origin is placed at the top-center of the warped image, since that lines up with the arm's own physical origin. Given a raw pixel coordinate `(x_raw, y_raw)` in the 640-wide warped image:
+
+```
+X_mm = (320 - x_raw) * S_pixel
+Y_mm = (y_raw * S_pixel) - 45mm
+```
+
+The `-45 mm` offset on Y exists because the arm's actual physical pivot point sits outside the camera's frame, not at the visible top edge of the mat — so this constant shifts every Y measurement to line up with where the arm's origin actually is.
+
+<p align="center">
+<img src="docs/images/coordinate_plane.png" width="700" alt="Detected cube and marker centers on the coordinate plane">
+</p>
+<!-- This is the debug overlay the vision script produces showing detected cube/marker COMs plotted against the X/Y origin -- swap in a current capture. -->
 
 ## Repo Structure
 
