@@ -20,11 +20,10 @@ Python • OpenCV • ArUco • Inverse Kinematics • Servo Calibration • Ras
 - [Inverse Kinematics](#inverse-kinematics)
 - [Calibration](#calibration)
 - [Vision System](#vision-system)
-- [Repo Structure](#repo-structure)
-- [Running It](#running-it)
 - [Known Limitations](#known-limitations)
 - [Future Improvements](#future-improvements)
 - [Credits](#credits)
+- [Contact](#contact)
 
 ## Overview
 
@@ -52,7 +51,7 @@ https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 9. **Servo calibration mapping** (`core/IK_solver.py`) — converts each mathematical joint angle into the actual hardware servo command, using per-servo calibration data.
 10. **Pick / place sequence + safe retreat** (`control/final_rainbow_stack.py`, `control/color_marker_match.py`) — the high-level task logic: open gripper → move → close gripper → retreat while holding the cube, then move → open gripper → nudge away → fold back to rest.
 
-Requirements are OpenCV (with the `opencv-contrib` ArUco module), NumPy, SciPy, and `pyserial`. Install with `pip install -r requirements.txt`, then run one of the scripts in `control/` (see [Running It](#running-it)).
+Requirements are OpenCV (with the `opencv-contrib` ArUco module), NumPy, SciPy, and `pyserial`. Install these with `pip install -r requirements.txt`, then run `python control/final_rainbow_stack.py` or `python control/color_marker_match.py` to orchestrate either pipeline. Both scripts talk to the servo bus over `/dev/ttyACM0` and default to webcam index `0`. Add `--dry-run` to run the full vision + correction + IK pipeline and print what it *would* do without moving any servos, or `--auto` to run the pick/place sequence without waiting for a manual ENTER between steps.
 
 ## Hardware
 
@@ -66,9 +65,14 @@ Requirements are OpenCV (with the `opencv-contrib` ArUco module), NumPy, SciPy, 
 | Raspberry Pi | Target deployment device (developed on a Mac, runs standalone on the Pi) |
 
 <p align="center">
-<img src="docs/images/arm_setup.jpg" width="700" alt="Arm and camera rig">
+<img src="docs/images/hardware_camera_rig.jpg" width="700" alt="Overhead camera and ring light rig">
 </p>
-<!-- Swap in a real photo of the arm + overhead camera rig once available. -->
+
+| Cubes & ArUco Markers | Servo Bus Controller | 3D-Printed Camera Mount |
+| :---: | :---: | :---: |
+| <img src="docs/images/hardware_cubes_markers.jpg" width="280"> | <img src="docs/images/hardware_servo_bus.jpg" width="280"> | <img src="docs/images/hardware_camera_mount.jpg" width="280"> |
+
+The camera sits on an adjustable stand with a ring light for consistent illumination, elevated on a 3D-printed mount to get the height needed for a full overhead view of the mat. Servos are driven off a Hiwonder BusLinker board rather than talking to each servo individually.
 
 The arm itself wasn't designed by us — it's the open-source **SO-101 follower arm**, sourced and 3D-printed from its published STL files and reference control code rather than bought pre-built. We first verified it fully under its stock leader/follower teleoperation scripts, then wrote all of the autonomous vision + control logic in this repo completely from scratch, independent of that source code.
 
@@ -215,37 +219,6 @@ The `-45 mm` offset on Y exists because the arm's actual physical pivot point si
 </p>
 <!-- This is the debug overlay the vision script produces showing detected cube/marker COMs plotted against the X/Y origin -- swap in a current capture. -->
 
-## Repo Structure
-
-```
-vision/          vision.py — camera capture, ArUco detection, HSV color segmentation
-core/            IK_solver.py (inverse kinematics + servo angle mapping), hardware_bridge.py
-control/         the two real pipelines: final_rainbow_stack.py, color_marker_match.py
-calibration/     calibration scripts + calibration_results.json / arm_corrections.json
-diagnostics/     low-level test utilities (single servo test, servo ID scan, IK test, etc.)
-archive/         earlier prototype scripts, superseded by the ones in control/
-lib/             vendored lewansoul-servo-bus library (third-party)
-```
-
-## Running It
-
-```bash
-pip install -r requirements.txt
-
-# Rainbow stack
-python control/final_rainbow_stack.py --dry-run
-
-# Color-to-marker matching
-python control/color_marker_match.py --dry-run
-```
-
-Serial port and camera index are fixed in-script (`/dev/ttyACM0` and webcam index `0`) rather than CLI flags, since these scripts only ever run against one Raspberry Pi + one webcam setup.
-
-| Flag | What it does |
-|---|---|
-| `--dry-run` | Runs the full vision + correction + IK pipeline and prints what it *would* do, without moving any servos |
-| `--auto` | Runs the pick/place sequence without waiting for a manual ENTER between steps |
-
 ## Known Limitations
 
 - **Lighting sensitivity.** Color detection uses fixed HSV thresholds tuned for one lighting setup. Cooler colors (green, blue, purple) separated reliably; warmer colors (red, orange, yellow) were harder, since glare could wash them out or make them bleed into each other. A more robust fix would be adaptive thresholding rather than hardcoded bounds tuned to one room.
@@ -267,6 +240,11 @@ Serial port and camera index are fixed in-script (`/dev/ttyACM0` and webcam inde
 
 - Arm design and base hardware: the open-source **SO-101 follower arm**, built from its published STL files and reference code — not designed by us, but sourced, 3D-printed, and assembled ourselves. All autonomous vision and control logic in this repo was written from scratch, independent of the arm's stock scripts.
 - Servo communication: [`lewansoul-servo-bus`](lib/lewansoul-servo-bus-master) (vendored third-party library — see its own README/LICENSE for details).
+
+## Contact
+
+If you have any questions or comments about this project, feel free to reach out at [phampp07@gmail.com](mailto:phampp07@gmail.com).
+<!-- Add a GitHub profile / LinkedIn / personal site link here if you want one listed. -->
 
 ---
 
