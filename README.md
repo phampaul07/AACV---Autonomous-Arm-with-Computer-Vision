@@ -41,15 +41,19 @@ https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 ### Color-to-Marker Matching Demonstration
 
 **1 block:**
+
 https://github.com/user-attachments/assets/0339e2e1-768a-4214-9200-37bc0f3b5590
 
 **2 blocks:**
+
 https://github.com/user-attachments/assets/ac4280dd-e74f-4bfe-a10e-287be266cade
 
 **3 blocks:**
+
 https://github.com/user-attachments/assets/d50a6ca7-8a57-48fc-9bc0-4a4e0f4cb001
 
 **4 blocks:**
+
 https://github.com/user-attachments/assets/bc9203bc-570f-4966-b7b6-78849c776dac
 
 ## Pipeline
