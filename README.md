@@ -8,11 +8,6 @@ An autonomous 6-DOF robotic arm that uses an overhead camera and OpenCV to find 
 Python • OpenCV • ArUco • Inverse Kinematics • Servo Calibration • Raspberry Pi • Robotics
 </p>
 
-<p align="center">
-<img src="docs/images/demo.gif" width="700" alt="AACV demo">
-</p>
-<!-- Swap docs/images/demo.gif for an actual sped-up demo clip once one is exported. -->
-
 ## README Contents
 - [Overview](#overview)
 - [Pipeline](#pipeline)
@@ -305,6 +300,11 @@ The `-45 mm` offset on Y exists because the arm's actual physical pivot point si
 
 - Arm design and base hardware: the open-source **SO-101 follower arm**, built from its published STL files and reference code — not designed by us, but sourced, 3D-printed, and assembled ourselves. All autonomous vision and control logic in this repo was written from scratch, independent of the arm's stock scripts.
 - Servo communication: [`lewansoul-servo-bus`](lib/lewansoul-servo-bus-master) (vendored third-party library — see its own README/LICENSE for details).
+
+## Contact
+
+- **Paul Pham** — [phampp07@gmail.com](mailto:phampp07@gmail.com) • [linkedin.com/in/paul-pham07](https://www.linkedin.com/in/paul-pham07)
+- **Cole Burton** — [cole12burton@gmail.com](mailto:cole12burton@gmail.com) • [linkedin.com/in/cole-burton-124464371](https://www.linkedin.com/in/cole-burton-124464371/)
 
 ---
 
