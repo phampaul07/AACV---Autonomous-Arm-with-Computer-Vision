@@ -34,9 +34,23 @@ The project has two objectives, both built on the same core vision → correctio
 
 Every cycle, regardless of objective, follows the same shape: look at the workspace, convert what the camera sees into millimeters, correct for the arm's known physical inaccuracy, solve inverse kinematics, convert that into real servo commands, then move.
 
-## Sped-Up Rainbow Stack Demonstration: 
+## Rainbow Stack Demonstration
+
 https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 
+### Color-to-Marker Matching Demonstration
+
+**1 block:**
+https://github.com/user-attachments/assets/0339e2e1-768a-4214-9200-37bc0f3b5590
+
+**2 blocks:**
+https://github.com/user-attachments/assets/ac4280dd-e74f-4bfe-a10e-287be266cade
+
+**3 blocks:**
+https://github.com/user-attachments/assets/d50a6ca7-8a57-48fc-9bc0-4a4e0f4cb001
+
+**4 blocks:**
+https://github.com/user-attachments/assets/bc9203bc-570f-4966-b7b6-78849c776dac
 
 ## Pipeline
 
@@ -59,7 +73,9 @@ Requirements are OpenCV (with the `opencv-contrib` ArUco module), NumPy, SciPy, 
 |---|---|
 | SO-101 follower arm (6 DOF) | Base, shoulder, elbow, wrist pitch, wrist roll, gripper |
 | Hiwonder/Lewansoul-style serial bus servos | Actuate all 6 joints, driven via `lewansoul-servo-bus` |
-| USB webcam | Overhead camera, ~737 mm above the mat, captures a cropped 640×400 px workspace |
+| Webcam — NexiGo N60 | Overhead camera, ~737 mm above the mat, captures a cropped 640×400 px workspace |
+| Ring light — Bower 12" LED Selfie Ring Light Studio | Consistent, even illumination across the mat for reliable color detection |
+| Mat — HyperX XL gaming mat | Flat, uniform dark surface the workspace, cubes, and ArUco markers sit on |
 | 3D-printed, painted cubes (30 mm) | Six colors: red, orange, yellow, green, blue, purple |
 | ArUco markers (`DICT_4X4_50`) | IDs 0–3: board corners + scale reference. IDs 4–9: color-to-marker task targets |
 | Raspberry Pi | Target deployment device (developed on a Mac, runs standalone on the Pi) |
@@ -68,11 +84,11 @@ Requirements are OpenCV (with the `opencv-contrib` ArUco module), NumPy, SciPy, 
 <img src="docs/images/hardware_camera_rig.jpg" width="700" alt="Overhead camera and ring light rig">
 </p>
 
-| Cubes & ArUco Markers | Servo Bus Controller | 3D-Printed Camera Mount |
-| :---: | :---: | :---: |
-| <img src="docs/images/hardware_cubes_markers.jpg" width="280"> | <img src="docs/images/hardware_servo_bus.jpg" width="280"> | <img src="docs/images/hardware_camera_mount.jpg" width="280"> |
+| Cubes & ArUco Markers | Servo Bus Controller | Camera on Mount | 3D-Printed Mount Alone |
+| :---: | :---: | :---: | :---: |
+| <img src="docs/images/hardware_cubes_markers.jpg" width="220"> | <img src="docs/images/hardware_servo_bus.jpg" width="220"> | <img src="docs/images/hardware_camera_closeup.jpg" width="220"> | <img src="docs/images/hardware_camera_mount.jpg" width="220"> |
 
-The camera sits on an adjustable stand with a ring light for consistent illumination, elevated on a 3D-printed mount to get the height needed for a full overhead view of the mat. Servos are driven off a Hiwonder BusLinker board rather than talking to each servo individually.
+The camera (NexiGo N60) sits on an adjustable stand with the Bower ring light for consistent illumination, elevated on a 3D-printed mount to get the height needed for a full overhead view of the mat. The workspace itself is a HyperX XL gaming mat, chosen for its flat, uniform dark surface. Servos are driven off a Hiwonder BusLinker board rather than talking to each servo individually.
 
 The arm itself wasn't designed by us — it's the open-source **SO-101 follower arm**, sourced and 3D-printed from its published STL files and reference control code rather than bought pre-built. We first verified it fully under its stock leader/follower teleoperation scripts, then wrote all of the autonomous vision + control logic in this repo completely from scratch, independent of that source code.
 
@@ -125,6 +141,11 @@ Y = 228.6, 279.4, 330.2 mm
 ```
 
 At each point, the difference between the commanded and actual position was recorded as a delta: `{"target": [x, y], "delta": [dx, dy]}`. Those 9 samples feed a `scipy.interpolate.RegularGridInterpolator` at runtime, so any arbitrary target between grid points gets a locally-interpolated correction instead of one flat number.
+
+<p align="center">
+<img src="docs/images/calibration_grid_board.jpg" width="500" alt="DIY calibration grid board used to measure position error">
+</p>
+<p align="center"><sub>The DIY grid board used to measure actual landing position against commanded targets before the arm was tested on the real mat.</sub></p>
 
 On top of both of these, a handful of small, deliberately *separate* task-specific biases handle physical quirks the general correction map can't capture:
 
