@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 *Stacks the cubes in ascending rainbow order.*
 
 <p align="center">
-<img src="docs/images/tower_stack_com.jpg" width="600" alt="Tower stack center-of-mass detection">
+<img src="docs/images/Tower_COM.jpg" width="600" alt="Tower stack center-of-mass detection">
 </p>
 <p align="center"><sub>Detected center-of-mass for all six stacked cubes, overlaid on the warped workspace image.</sub></p>
 <!-- Placeholder: swap in a captured frame from the rainbow stack run showing the COM dot for all 6 cubes. -->
