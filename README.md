@@ -203,7 +203,8 @@ P_dst = H · P_raw
 Every downstream measurement — cube positions, marker positions, the mm/pixel scale — happens in this flat, top-down warped space rather than the original angled camera view.
 
 <p align="center">
-<img src="docs/images/pipeline_perspective_warp.jpg" width="700" alt="Raw camera capture next to the warped, top-down workspace">
+  <img src="docs/images/cropped_image.jpg" width="45%" alt="Raw camera capture">
+  <img src="docs/images/warped.jpg" width="45%" alt="Warped top-down workspace">
 </p>
 <p align="center"><sub>Raw angled camera capture (left) vs. the homography-warped, top-down 640×400 canonical view (right).</sub></p>
 <!-- Placeholder: side-by-side of the raw frame and the cv2.getPerspectiveTransform output. -->
