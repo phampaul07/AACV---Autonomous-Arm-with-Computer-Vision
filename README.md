@@ -25,7 +25,7 @@ Python • OpenCV • ArUco • Inverse Kinematics • Servo Calibration • Ras
 The project has two objectives, both built on the same core vision → correction → IK → servo pipeline:
 
 1. **Rainbow Stack** — detect six 3D-printed, painted 30 mm cubes (red, orange, yellow, green, blue, purple) placed anywhere on the mat, and stack them on top of each other in rainbow order. The purple cube's real, detected position becomes the base of the tower — the tower isn't built at a fixed board coordinate, it's built wherever purple actually is.
-2. **Color-to-Marker Matching** — cubes are placed anywhere on the mat next to ArUco markers, where each marker ID maps to a color (ID 4 = red, ID 5 = orange, and so on). The arm scans once, matches each visible cube to its marker by color, and sorts every matched pair — no stacking, one level only.
+2. **Color-to-Marker Matching** — cubes are placed anywhere on the mat next to ArUco markers, where each marker ID maps to a color (ID 4 = red, ID 5 = orange, and so on). The arm scans once, matches each visible cube to its marker by color, and sorts every matched pair.
 
 Every cycle, regardless of objective, follows the same shape: look at the workspace, convert what the camera sees into millimeters, correct for the arm's known physical inaccuracy, solve inverse kinematics, convert that into real servo commands, then move.
 
@@ -36,7 +36,7 @@ https://github.com/user-attachments/assets/8b10d193-9655-4c45-8982-1995a2f74699
 *Stacks the cubes in ascending rainbow order.*
 
 <p align="center">
-<img src="docs/images/tower_stack_com.jpg" width="600" alt="Tower stack center-of-mass detection">
+<img src="docs/images/Tower_COM.jpg" width="600" alt="Tower stack center-of-mass detection">
 </p>
 <p align="center"><sub>Detected center-of-mass for all six stacked cubes, overlaid on the warped workspace image.</sub></p>
 <!-- Placeholder: swap in a captured frame from the rainbow stack run showing the COM dot for all 6 cubes. -->
@@ -203,7 +203,8 @@ P_dst = H · P_raw
 Every downstream measurement — cube positions, marker positions, the mm/pixel scale — happens in this flat, top-down warped space rather than the original angled camera view.
 
 <p align="center">
-<img src="docs/images/pipeline_perspective_warp.jpg" width="700" alt="Raw camera capture next to the warped, top-down workspace">
+  <img src="docs/images/cropped_image.jpg" width="45%" alt="Raw camera capture">
+  <img src="docs/images/warped.jpg" width="45%" alt="Warped top-down workspace">
 </p>
 <p align="center"><sub>Raw angled camera capture (left) vs. the homography-warped, top-down 640×400 canonical view (right).</sub></p>
 <!-- Placeholder: side-by-side of the raw frame and the cv2.getPerspectiveTransform output. -->
@@ -216,7 +217,8 @@ High-contrast regions — the black/white ArUco patterns and the white robot cla
 2. **Claw removal.** The claw is located with a threshold-based bounding box, then that region is filled in with the mean color sampled from its perimeter — removing the claw's bright, high-contrast footprint from the mask without leaving an obvious hole.
 
 <p align="center">
-<img src="docs/images/pipeline_noise_reduction.jpg" width="700" alt="Before and after marker and claw removal">
+ <img src="docs/images/warped.jpg" width="45%" alt="Warped top-down workspace">
+  <img src="docs/images/warped_cleaned.jpg" width="45%" alt ="Cleaned Warped top-down workspace">
 </p>
 <p align="center"><sub>Before (left) and after (right) marker dilation/removal and claw perimeter-fill cleanup.</sub></p>
 <!-- Placeholder: before/after frame showing the marker + claw masks painted out. -->
@@ -237,7 +239,12 @@ After cleanup, the warped image is thresholded per color using `cv2.inRange()`, 
 Red needs two disjoint hue ranges since red wraps around both ends of OpenCV's 0–180 hue scale. Yellow's unusually tight, low-saturation range exists because under this setup's lighting, yellow reads closer to a bright near-white than a saturated color — see [Known Limitations](#known-limitations) for more on warm-color detection being harder than cool-color detection in general.
 
 <p align="center">
-<img src="docs/images/pipeline_hsv_masks.jpg" width="700" alt="Per-color HSV threshold masks">
+<img src="docs/images/mask_red.jpg" width="30%" alt="Red Mask">
+<img src="docs/images/mask_orange.jpg" width="30%" alt="Orange Mask">
+<img src="docs/images/mask_yellow.jpg" width="30%" alt="Yellow Mask">
+<img src="docs/images/mask_green.jpg" width="30%" alt="Green Mask">
+<img src="docs/images/blue_mask.jpg" width="30%" alt="Blue Mask">
+<img src="docs/images/mask_purple.jpg" width="30%" alt="Purple Mask">
 </p>
 <p align="center"><sub>Binary HSV masks for each of the six target colors after `cv2.inRange()` thresholding.</sub></p>
 <!-- Placeholder: grid of the 6 per-color cv2.inRange() masks side by side. -->
@@ -254,7 +261,7 @@ cY = M["m01"] / M["m00"]
 That (cX, cY) pixel coordinate is the cube's detected pickup point.
 
 <p align="center">
-<img src="docs/images/pipeline_color_to_marker_com.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
+<img src="docs/images/COM.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
 </p>
 <p align="center"><sub>Full color-to-marker pipeline: warped frame with each detected cube's center-of-mass matched to its corresponding ArUco marker ID.</sub></p>
 <!-- Placeholder: annotated frame from color_marker_match.py showing cube COM -> marker ID pairings. -->
@@ -274,10 +281,6 @@ Y_mm = (y_raw * S_pixel) - 45mm
 
 The `-45 mm` offset on Y exists because the arm's actual physical pivot point sits outside the camera's frame, not at the visible top edge of the mat — so this constant shifts every Y measurement to line up with where the arm's origin actually is.
 
-<p align="center">
-<img src="docs/images/coordinate_plane.png" width="700" alt="Detected cube and marker centers on the coordinate plane">
-</p>
-<!-- This is the debug overlay the vision script produces showing detected cube/marker COMs plotted against the X/Y origin -- swap in a current capture. -->
 
 ## Known Limitations
 
