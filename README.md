@@ -281,10 +281,6 @@ Y_mm = (y_raw * S_pixel) - 45mm
 
 The `-45 mm` offset on Y exists because the arm's actual physical pivot point sits outside the camera's frame, not at the visible top edge of the mat — so this constant shifts every Y measurement to line up with where the arm's origin actually is.
 
-<p align="center">
-<img src="docs/images/coordinate_plane.png" width="700" alt="Detected cube and marker centers on the coordinate plane">
-</p>
-<!-- This is the debug overlay the vision script produces showing detected cube/marker COMs plotted against the X/Y origin -- swap in a current capture. -->
 
 ## Known Limitations
 
