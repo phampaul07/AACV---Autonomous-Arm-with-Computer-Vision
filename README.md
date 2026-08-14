@@ -239,7 +239,12 @@ After cleanup, the warped image is thresholded per color using `cv2.inRange()`, 
 Red needs two disjoint hue ranges since red wraps around both ends of OpenCV's 0–180 hue scale. Yellow's unusually tight, low-saturation range exists because under this setup's lighting, yellow reads closer to a bright near-white than a saturated color — see [Known Limitations](#known-limitations) for more on warm-color detection being harder than cool-color detection in general.
 
 <p align="center">
-<img src="docs/images/pipeline_hsv_masks.jpg" width="700" alt="Per-color HSV threshold masks">
+<img src="docs/images/mask_red.jpg" width="30%" alt="Red Mask">
+<img src="docs/images/mask_orange.jpg" width="30%" alt="Orange Mask">
+<img src="docs/images/mask_yellow.jpg" width="30%" alt="Yellow Mask">
+<img src="docs/images/mask_green.jpg" width="30%" alt="Green Mask">
+<img src="docs/images/mask_blue.jpg" width="30%" alt="Blue Mask">
+<img src="docs/images/mask_purple.jpg" width="30%" alt="Purple Mask">
 </p>
 <p align="center"><sub>Binary HSV masks for each of the six target colors after `cv2.inRange()` thresholding.</sub></p>
 <!-- Placeholder: grid of the 6 per-color cv2.inRange() masks side by side. -->
@@ -256,7 +261,7 @@ cY = M["m01"] / M["m00"]
 That (cX, cY) pixel coordinate is the cube's detected pickup point.
 
 <p align="center">
-<img src="docs/images/Center_of_Mass.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
+<img src="docs/images/COM.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
 </p>
 <p align="center"><sub>Full color-to-marker pipeline: warped frame with each detected cube's center-of-mass matched to its corresponding ArUco marker ID.</sub></p>
 <!-- Placeholder: annotated frame from color_marker_match.py showing cube COM -> marker ID pairings. -->
