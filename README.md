@@ -217,7 +217,8 @@ High-contrast regions — the black/white ArUco patterns and the white robot cla
 2. **Claw removal.** The claw is located with a threshold-based bounding box, then that region is filled in with the mean color sampled from its perimeter — removing the claw's bright, high-contrast footprint from the mask without leaving an obvious hole.
 
 <p align="center">
-<img src="docs/images/pipeline_noise_reduction.jpg" width="700" alt="Before and after marker and claw removal">
+ <img src="docs/images/warped.jpg" width="45%" alt="Warped top-down workspace">
+  <img src="docs/images/warped_cleaned.jpg" width="45%" alt ="Cleaned Warped top-down workspace">
 </p>
 <p align="center"><sub>Before (left) and after (right) marker dilation/removal and claw perimeter-fill cleanup.</sub></p>
 <!-- Placeholder: before/after frame showing the marker + claw masks painted out. -->
