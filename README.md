@@ -243,7 +243,7 @@ Red needs two disjoint hue ranges since red wraps around both ends of OpenCV's 0
 <img src="docs/images/mask_orange.jpg" width="30%" alt="Orange Mask">
 <img src="docs/images/mask_yellow.jpg" width="30%" alt="Yellow Mask">
 <img src="docs/images/mask_green.jpg" width="30%" alt="Green Mask">
-<img src="docs/images/mask_blue.jpg" width="30%" alt="Blue Mask">
+<img src="docs/images/blue_mask.jpg" width="30%" alt="Blue Mask">
 <img src="docs/images/mask_purple.jpg" width="30%" alt="Purple Mask">
 </p>
 <p align="center"><sub>Binary HSV masks for each of the six target colors after `cv2.inRange()` thresholding.</sub></p>
