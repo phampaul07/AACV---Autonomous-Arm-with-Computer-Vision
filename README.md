@@ -256,7 +256,7 @@ cY = M["m01"] / M["m00"]
 That (cX, cY) pixel coordinate is the cube's detected pickup point.
 
 <p align="center">
-<img src="docs/images/pipeline_color_to_marker_com.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
+<img src="docs/images/Center_of_Mass.jpg" width="700" alt="Color-to-marker matching pipeline with detected COMs">
 </p>
 <p align="center"><sub>Full color-to-marker pipeline: warped frame with each detected cube's center-of-mass matched to its corresponding ArUco marker ID.</sub></p>
 <!-- Placeholder: annotated frame from color_marker_match.py showing cube COM -> marker ID pairings. -->
